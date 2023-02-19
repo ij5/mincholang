@@ -11,7 +11,7 @@ let compiler = true;
 
 const compileButton = <HTMLButtonElement>document.getElementById('compile');
 
-const grammar = ohm.grammar(String.raw`
+const raw = String.raw`
 Grammar {
   Program = "민트" "초코는" "너무" "맛있어" Start "민트" "초코는" "너무" "맛있어"
 
@@ -23,17 +23,17 @@ Grammar {
   Etc = Bye | SaySum | SayAdd | Say
 
   Say = names ":" SayChild+ (PrintAscii | ByeChild | PrintNumber)*
-  SayChild = "정말"? (Negadj | Posadj)* (negnoun | posnoun) ("이야" | "야" | "구나" | "이구나" | "같아" | "같구나")
+  SayChild = Adj* (negnoun | posnoun)
 
   SayAdd = names ":" SayAddChild+ (PrintAscii | ByeChild | PrintNumber)*
-  SayAddChild = "정말"? (Negadj | Posadj)* (negnoun | posnoun) ("와" | "과") (Negadj | Posadj)* (negnoun | posnoun) Add (Negadj2 | Posadj2)
+  SayAddChild = "정말"? Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Add Adj2
 
   SaySum = names ":" SaySumChild+ (PrintAscii | ByeChild | PrintNumber)*
-  SaySumChild = "정말"? (Negadj | Posadj)* (negnoun | posnoun) ("와" | "과") (Negadj | Posadj)* (negnoun | posnoun) Sum (Negadj2 | Posadj2)
+  SaySumChild = "정말"? Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Sum Adj2
 
-  PrintAscii = "민트" "초코를" ("싫어해" | "증오해")
+  PrintAscii = "민초" "만세" "!"?
 
-  PrintNumber = "민트" "초코를" ("사랑해" | "좋아해")
+  PrintNumber = "민초" "내놔" "!"?
 
   Add = "의" "합" "만큼" -- add
     | josa ("합친" | "합한") "것" "만큼" -- josaadd
@@ -41,64 +41,24 @@ Grammar {
   Sum = "의" ("차" "만큼" | "차이" "만큼")
 
   Bye = names ":" ByeChild
-  ByeChild = "민초" "최고" ("." | "!")
+  ByeChild = "민초" "최고" "!"?
 
   josa = ("을" | "를")
 
-  Negadj = Negadj_sub
-    | "멍청하고" 
-    | "멍청한"
-    | "뚱뚱하고" 
-    | "뚱뚱한"
-    | "낡고" 
-    | "낡은"
-    | "못생겼고" 
-    | "못생긴"
+  Adj = ${[...data.adj, ...data.adjend].map(a => `"${a}"`).join(' | ')}
+  Adj2 = ${data.adj2.map(a => `"${a}"`).join(' | ')}
 
-  Negadj_sub = "머저리" "같고"
-    | "머저리" "같은"
-    | "먼지" "투성이에"
-    | "먼지" "투성이인"
-    | "바보" "같고"
-    | "바보" "같은"
-
-  Negadj2 = "멍청하구나" | "멍청해"
-    | "낡았구나" | "낡았어"
-    | "못생겼구나" | "못생겼어"
-    | Negadj2_sub
-
-  Negadj2_sub = "겁이" "많아"
-    | "겁이" "많구나"
-    | "바보" "같구나"
-    | "바보" "같아"
-    | "머저리" "같구나"
-    | "머저리" "같아"
-
-  Posadj = "착하고" | "착한"
-    | "아름답고" | "아름다운"
-    | "잘생겼고" | "잘생긴"
-    | "용감하고" | "용감한"
-    | "멋지고" | "멋진"
-    | "따뜻하고" | "따뜻한"
-    | "사랑스럽고" | "사랑스러운"
-
-  Posadj2 = "착하구나" | "착해"
-    | "아름답구나" | "아름다워"
-    | "잘생겼구나" | "잘생겼어"
-    | "용감하구나" | "용감해"
-    | "멋지구나" | "멋져"
-    | "따뜻하구나" | "따뜻해"
-    | "사랑스럽구나" | "사랑스러워"
-
-  negnoun = "겁쟁이" | "돼지" | "거짓말쟁이" | "생쥐" | "물집"
+  negnoun = ${data.negnoun.map(n => `"${n}"`).join(' | ')}
 
   names = "민트" | "초코"
 
-  posnoun = "영웅" | "천사" | "사과" | "희망" | "여름날" | "코" | "도둑놈"
+  posnoun = ${data.posnoun.map(n => `"${n}"`).join(' | ')}
 
   han = ("가".."힣")+
 }
-`);
+`
+console.log(raw);
+const grammar = ohm.grammar(raw);
 
 let ctx = {
   you: 0,
@@ -156,7 +116,7 @@ s.addOperation('eval', {
     }
     // console.log(variable);
   },
-  SayChild(_e2, _e3, _e4, _e5){
+  SayChild(_e3, _e4){
     let n1 = 0;
     if(_e4.ctorName === "negnoun"){
       n1 -= 1;
@@ -308,9 +268,6 @@ function translate(text: string){
   result.value += "민트 초코는 너무 맛있어\n\n";
   let me = "민트";
   let you = "초코";
-  text = text.replace(/\[[가-힣]+\]/g, "").replace(/\n\n/g, "");
-
-  result.value += me + ".\n그녀의 이름은 " + you + ".\n\n";
 
   let res = "";
   let myturn = true;
@@ -318,15 +275,13 @@ function translate(text: string){
     const code = char.charCodeAt(0);
     const binary = code.toString(2);
     let count = 1;
-    res += `${myturn?me:you}: 우리 헤어지자.\n`;
+    res += `${myturn?me:you}: 민초 최고!\n`;
     res += `${myturn?me:you}: `
     if(binary[binary.length-1]==="1") {
-      res += `너는${Math.floor(Math.random() * 2)===1?" 정말":""} `;
-      res += `${data.posnoun[Math.floor(Math.random() * data.posnoun.length)]}. \n`
+      res += `${data.posnoun[Math.floor(Math.random() * data.posnoun.length)]}\n`
     }
     for(let bin = binary.length-2; bin >= 0; bin--){
       if(binary[bin] === "1"){
-        res += `너는${Math.floor(Math.random() * 2)===1?" 정말":""} `
         for(let _i = 1; _i<=count; _i*=2){
           // console.log("i", _i)
           let item;
@@ -337,18 +292,18 @@ function translate(text: string){
           }
           res += `${item} `;
         }
-        res += `${data.posnoun[Math.floor(Math.random() * data.posnoun.length)]}. \n`
+        res += `${data.posnoun[Math.floor(Math.random() * data.posnoun.length)]}\n`
       }
 
       count *= 2;
       // console.log(count);
     }
     myturn = !myturn;
-    res += "대답을 해봐.\n\n";
+    res += "민초 만세!\n\n";
   }
   // console.log(res)
   result.value += res;
-  result.value += "\a민트 초코는 너무 맛있어"
+  result.value += "민트 초코는 너무 맛있어"
 }
 
 new ClipboardJS('#copy');
