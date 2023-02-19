@@ -26,10 +26,10 @@ Grammar {
   SayChild = Adj* (negnoun | posnoun)
 
   SayAdd = names ":" SayAddChild+ (PrintAscii | ByeChild | PrintNumber)*
-  SayAddChild = "정말"? Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Add Adj2
+  SayAddChild = Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Add Adj2
 
   SaySum = names ":" SaySumChild+ (PrintAscii | ByeChild | PrintNumber)*
-  SaySumChild = "정말"? Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Sum Adj2
+  SaySumChild = Adj* (negnoun | posnoun) ("와" | "과") Adj* (negnoun | posnoun) Sum Adj2
 
   PrintAscii = "민초" "만세" "!"?
 
@@ -46,7 +46,7 @@ Grammar {
   josa = ("을" | "를")
 
   Adj = ${[...data.adj, ...data.adjend].map(a => `"${a}"`).join(' | ')}
-  Adj2 = ${data.adj2.map(a => `"${a}"`).join(' | ')}
+  Adj2 = ${[...data.negadj2, ...data.posadj2].map(a => `"${a}"`).join(' | ')}
 
   negnoun = ${data.negnoun.map(n => `"${n}"`).join(' | ')}
 
@@ -150,7 +150,7 @@ s.addOperation('eval', {
     }
     // console.log(variable);
   },
-  SayAddChild(_2, _3, _4, _5, _6, _7, _8, _9){
+  SayAddChild(_3, _4, _5, _6, _7, _8, _9){
     let n1 = 0;
     if(_4.ctorName === "negnoun"){
       n1 -= 1;
@@ -200,7 +200,7 @@ s.addOperation('eval', {
     }
     // console.log(variable);
   },
-  SaySumChild(_2, _3, _4, _5, _6, _7, _8, _9){
+  SaySumChild(_3, _4, _5, _6, _7, _8, _9){
     let n1 = 0;
     if(_4.ctorName === "negnoun"){
       n1 -= 1;
