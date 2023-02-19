@@ -320,14 +320,14 @@ const translateButton = <HTMLButtonElement>document.getElementById('translate');
 translateButton?.addEventListener('click', ()=>{
   if(compiler){
     compiler = !compiler;
-    title.textContent = "Sumlang Translator";
+    title.textContent = "MinchoLang Translator";
     code.placeholder = "코드로 변환할 텍스트를 입력하세요.";
     code.value = "";
     result.value = "이곳에 번역된 코드가 나타납니다.";
     compileButton.textContent = "번역 ->";
   }else{
     compiler = !compiler;
-    title.textContent = "Sumlang Compiler";
+    title.textContent = "MinchoLang Compiler";
     code.placeholder = "컴파일할 코드를 입력하세요.";
     code.value = "";
     result.value = "이곳에 실행 결과가 나타납니다.";
